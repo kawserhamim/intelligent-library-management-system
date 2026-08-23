@@ -91,4 +91,3 @@ npm run dev
 
 ## 🔒 Security & Environment
 Never commit `.env` files containing sensitive credentials, API keys, or secret tokens. Always use `.env.example` as a template for local development.
-# intelligent-library-management-system

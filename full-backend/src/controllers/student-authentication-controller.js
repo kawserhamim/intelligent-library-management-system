@@ -1,0 +1,169 @@
+import StudentAuthentication from "../models/student-authentication-model.js";
+import User from "../models/user-auth-models.js";
+import TemporaryRegNo from "../models/TemporaryRegNo.js";
+
+export const createStudentAuthentication = async (req, res) => {
+  try {
+    const { name, gmail, regNo, gender, Session, department } = req.body;
+
+    if (!name || !gmail || !regNo || !gender || !Session || !department) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    const existingEmail = await StudentAuthentication.findOne({ gmail });
+    if (existingEmail) {
+      return res.status(409).json({
+        success: false,
+        message: "Student authentication with this Gmail already exists",
+      });
+    }
+
+    const existingRegNo = await StudentAuthentication.findOne({ regNo });
+    if (existingRegNo) {
+      return res.status(409).json({
+        success: false,
+        message: "Student authentication with this registration number already exists",
+      });
+    }
+
+    const savedStudentAuthentication = await StudentAuthentication.create({
+      name,
+      gmail,
+      regNo,
+      gender,
+      Session,
+      department,
+    });
+
+    console.log("Student authentication created successfully:", savedStudentAuthentication);
+
+    return res.status(201).json({
+      success: true,
+      message: "Student authentication created successfully",
+      data: savedStudentAuthentication,
+    });
+  } catch (error) {
+    console.error("Error creating student authentication:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create student authentication data",
+      error: error.message,
+    });
+  }
+};
+
+export const getAllStudentAuthentications = async (req, res) => {
+  try {
+    const offset = parseInt(req.query.offset) || 0;
+    const limit = parseInt(req.query.limit) || 20;
+    const { department, Session } = req.query;
+
+    const filter = {};
+    if (department) filter.department = department;
+    if (Session) filter.Session = Session;
+
+    const totalStudents = await StudentAuthentication.countDocuments(filter);
+    const studentAuthentications = await StudentAuthentication.find(filter)
+      .skip(offset)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const pageCount = Math.ceil(totalStudents / limit);
+
+    return res.status(200).json({
+      success: true,
+      message: "Student authentications retrieved successfully",
+      data: studentAuthentications,
+      pagination: {
+        totalStudents,
+        offset,
+        limit,
+        pageCount,
+      },
+      filters: {
+        department: department || "all",
+        Session: Session || "all",
+      },
+    });
+  } catch (error) {
+    console.error("Error retrieving student authentications:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve student authentications",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteStudentAuthentication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const finds = await StudentAuthentication.findById(id);
+
+    if (!finds) {
+      return res.status(404).json({
+        success: false,
+        message: "Student authentication not found",
+      });
+    }
+
+    const findUserByRegNo = await User.findOne({ regNo: finds.regNo });
+
+    await TemporaryRegNo.create({ regNo: finds.regNo });
+
+    if (findUserByRegNo) {
+      await User.findByIdAndDelete(findUserByRegNo._id);
+    }
+
+    const deletedStudentAuthentication = await StudentAuthentication.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Student authentication deleted successfully",
+      data: deletedStudentAuthentication,
+    });
+  } catch (error) {
+    console.error("Error deleting student authentication:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete student authentication",
+      error: error.message,
+    });
+  }
+};
+
+export const searchStudentAuthentication = async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query is required",
+      });
+    }
+
+    const searchResults = await StudentAuthentication.find({
+      $or: [
+        { name: { $regex: query, $options: "i" } },
+        { gmail: { $regex: query, $options: "i" } },
+        { regNo: { $regex: query, $options: "i" } },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Search results retrieved successfully",
+      data: searchResults,
+    });
+  } catch (error) {
+    console.error("Error searching student authentications:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to search student authentications",
+      error: error.message,
+    });
+  }
+};

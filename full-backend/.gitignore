@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+dist/
+build/
+coverage/
+*.log
+.DS_Store
+.idea/
+.vscode/
+.puku/
+uploads/
+api.md

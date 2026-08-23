@@ -1,0 +1,38 @@
+# Dependencies
+**/node_modules/
+node_modules/
+
+# Environment files
+**/.env
+**/.env.local
+**/.env.*.local
+.env
+.env.*
+!.env.example
+
+# Build and distribution files
+**/dist/
+**/build/
+**/coverage/
+**/.vercel/
+dist/
+build/
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Backend specific
+**/uploads/
+**/.puku/
